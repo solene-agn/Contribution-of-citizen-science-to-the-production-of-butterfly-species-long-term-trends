@@ -13,6 +13,7 @@ library("rbms")
 
 source("workshop_functions.R")
 
+# Script basé sur le workshop https://butterfly-monitoring.github.io/bms_workshop/index.html , et la documentation annexe https://butterfly-monitoring.github.io/bms_workshop/GAI%20approach.pdf
 # Data importation --------------------------------------------------
 
 obs <- data.table::fread("data/data/STERF_groups_corrige_mai_aout_nationale.csv")
@@ -85,7 +86,8 @@ ts_season_visit <- rbms::ts_monit_site(ts_season, MY_visit_region)
 
 MY_count_region <- obs
 
-species <- "Belle-dame"
+# Species list
+species <- "Belle-dame" # pour tester pour le moment
 s_sp <- "Belle-dame"
 
 # for (s_sp in unique(obs$SPECIES)) {
@@ -147,7 +149,7 @@ for (s_sp in species) {
   #    saveRDS(co_index_boot, file.path("bms_workshop_data", paste( gsub(" ", "_", s_sp), bms_id, "co_index_boot.rds", sep="_")))
   
   
-  # Figure with CI
+  # Figure with CI ==== 
   
   #co_index_boot <- readRDS(file.path("bms_workshop_data", paste( gsub(" ", "_", s_sp), bms_id, "co_index_boot.rds", sep="_")))
   
@@ -214,11 +216,9 @@ for (s_sp in species) {
   plot_col
   ggsave(filename = paste0(getwd(),"/Results/Trend_plots/Plot_col/plot_col_center_1st_year_",s_sp,".jpg"), plot_col,
          width = 30, height = 20, units = "cm", dpi = 300)
+
   
   # Calculating species trends ----
-  # Specify the species - note the underscore
-  # spp <- "Myrtil"
-  
   spp <- s_sp
   
   # # Read in the bootstrapped collated indices
@@ -284,3 +284,4 @@ for (s_sp in species) {
   write.table(Trend_total, file=paste0(getwd(),"/Results/Temporal_trends_table/Total_Trend_.csv"), sep=";", row.names=FALSE)
   
 }
+
