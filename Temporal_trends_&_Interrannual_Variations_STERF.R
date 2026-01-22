@@ -18,9 +18,9 @@ library("ggpubr")
 library("ggthemes")
 library("ggrepel")
 
-
 set.seed(1234)
 
+# Functions --------------------------------------------------------
 lu <- function(x){
   y <- length(unique(x))
   return(y) 
@@ -38,7 +38,6 @@ overdisp_fun <- function(model) { # to test overdispersion
 # Data importation --------------------------------------------------
 
 obs <- data.table::fread("data/data/STERF_groups_corrige_mai_aout_nationale.csv", encoding="UTF-8")
-obs <- data.table::fread("D:Profiles/Agnoux/Documents/Butterfly/Avec_phenologie/data/data/STERF_groups_corrige_mai_aout_nationale.csv")
 
 names(obs)[names(obs)=="GROUP"] <- "SPECIES"
 
@@ -58,14 +57,14 @@ names(obs)[names(obs)=="Site_transect_ID"] <- "SITE_ID"
 info_site <- dplyr::distinct(obs[,c("SITE_ID", "LONGITUDE", "LATITUDE")])
 
 # STEP 2:
-# Creation de la serie temporelle correspondant aux donnees
+# Creation of the time series corresponding to the data
 ts_date <- ts_dwmy_table(InitYear = min(obs$YEAR),
                          LastYear = max(obs$YEAR) ,
-                         WeekDay1 = 'monday') #Lundi est indique comme premier jour de la semaine (par defaut dimanche)
+                         WeekDay1 = 'monday') # Monday is indicated as the first day of the week (default is Sunday)
 
-# Creation des tables de donnees pour les phenologies et l'analyse temporelle 
+# Creation of data tables for phenology and temporal analysis
 ts_season <- ts_monit_season(ts_date,
-                             StartMonth = 5, # 4 pour le sterf habituellement
+                             StartMonth = 5, # 4 for the STERF usually
                              EndMonth = 8, # 9
                              Anchor = TRUE,
                              AnchorLength = 3,
@@ -78,12 +77,14 @@ ts_season_visit <- rbms::ts_monit_site(ts_season, MY_visit_region)
 MY_count_region <- obs
 
 
-# "Aurores", "Machaons",
+# Species selection 
+# "Aurores", "Machaons" # not enough data
 species <- c("Amaryllis",  "Belle-dame", "Citrons", "Cuivres", "Demi-deuils", "Hesperides orangees",
              "Lycenes bleus", "Megeres", "Myrtil", "Paon du jour", "Petites tortues", "Pierides blanches",
              "Procris", "Robert-le-diable", "Soucis", "Sylvains", "Tabac d'Espagne", "Tircis", "Tristan", "Vulcain")
 
-s_sp=species[1]
+#s_sp=species[1] # to test the function with the first species
+
 for (s_sp in species) {
   
   ts_season_count <- rbms::ts_monit_count_site(ts_season_visit, MY_count_region, sp = s_sp)
@@ -120,8 +121,7 @@ for (s_sp in species) {
   
   espece.S <- espece.S[complete.cases(espece.S$FINAL_COUNT)]
    nrow(espece.S[espece.S$FINAL_COUNT!=0,])
-  # 
-  # 
+  
   # espece_e <- espece.S
   # espece_e <- espece_e[!is.na(espece_e$LATITUDE),]
   # 
@@ -130,6 +130,9 @@ for (s_sp in species) {
   # espece_e$LATITUDE <- scale(espece_e$LATITUDE)
   # espece_e$MONTH <- scale(espece_e$MONTH)
   # 
+
+  # To test temporal trend models
+  
   # mod.TMB.nb <- glmmTMB(COUNT ~ YEAR*MONTH + LATITUDE+LONGITUDE   + (1 | SITE_ID/TRANSECT_ID), data = espece_e, family="nbinom2")
   # summary(mod.TMB.nb)
   # 
@@ -154,8 +157,7 @@ for (s_sp in species) {
   espece.S$LONGITUDE <- scale(espece.S$LONGITUDE)
   espece.S$LATITUDE <- scale(espece.S$LATITUDE)
   espece.S$MONTH <- scale(espece.S$MONTH)
-  #espece.S$MONTH <- as.factor(as.character(espece.S$MONTH))
-
+  
   #mod.TMB <- glmmTMB(COUNT ~ YEAR2.S + LATITUDE + LONGITUDE + MONTH + (1 | SITE_ID/TRANSECT_ID), data = espece.S, family="poisson")
   # mod.TMB <- glmmTMB(FINAL_COUNT ~ YEAR2.S + LATITUDE + LONGITUDE + (1 | SITE_ID/TRANSECT_ID), weights=TOTAL_NM,  data = espece.S, family="poisson")
   mod.TMB <- glmmTMB(FINAL_COUNT ~ YEAR2.S*MONTH + LATITUDE + LONGITUDE + (1 | SITE_ID/TRANSECT_ID), weights=TOTAL_NM,  data = espece.S, family="poisson")
@@ -164,15 +166,14 @@ for (s_sp in species) {
 
   obj.S<-allEffects(mod.TMB,xlevels=list(YEAR2.S))
 
-  varcwm.S <- data.frame(obj.S$YEAR2.S)
-  names(varcwm.S)[1] <- "year"
-  varcwm.S$annees <- as.numeric(levels(varcwm.S$year))[varcwm.S$year]
-  varcwm.S$Espece <- rep(s_sp, nrow(varcwm.S))
-  varcwm.S$Programme <- rep("STERF", nrow(varcwm.S))
-  varcwm.S$AIC <- summary(mod.TMB)$AIC[1]
+  var.abond.S <- data.frame(obj.S$YEAR2.S)
+  names(var.abond.S)[1] <- "year"
+  var.abond.S$annees <- as.numeric(levels(var.abond.S$year))[var.abond.S$year]
+  var.abond.S$Espece <- rep(s_sp, nrow(var.abond.S))
+  var.abond.S$Programme <- rep("STERF", nrow(var.abond.S))
+  var.abond.S$AIC <- summary(mod.TMB)$AIC[1]
 
-
-  # ggplot(varcwm.S, aes(annees,fit))+
+  # ggplot(var.abond.S, aes(annees,fit))+
   #   #geom_point()+
   #   geom_line(linewidth=1)+
   #   geom_rangeframe() +
@@ -180,18 +181,17 @@ for (s_sp in species) {
   #   theme_classic() +
   #   labs(title = paste0("", s_sp), # Tendance temporelle d'abondance des populations d'imagos :
   #        subtitle = ,  x="Year", y = "Index of abundance") + #ajouter text_trend ? subtitle # Indice d'abondance
-  #   geom_smooth(formula = y~ x, method=lm, data = varcwm.S ,se=TRUE, fullrange=TRUE, aes(y = fit, x = annees), alpha = 0.1, fill = '#3cd3dc') +
+  #   geom_smooth(formula = y~ x, method=lm, data = var.abond.S ,se=TRUE, fullrange=TRUE, aes(y = fit, x = annees), alpha = 0.1, fill = '#3cd3dc') +
   #  theme(aspect.ratio = 1, plot.title = element_text(size = 10, face = "bold"), axis.text.x= element_text(angle = 30 , size = 2)) +
     # scale_x_continuous(breaks = seq(2006, 2019, 1), lim = c(2006, 2019))
 
-  # write.table(varcwm.S, paste("Method_2/Results/IV/sterf_resultFreqVarcwm_glmmTMB_", s_sp, ".csv"), sep = ";", row.names = FALSE)
-  write.table(varcwm.S, paste("sterf/IV/sterf_resultFreqVarcwm_glmmTMB_", s_sp, ".csv"), sep = ";", row.names = FALSE)
+  write.table(var.abond.S, paste("sterf/IV/sterf_result_glmmTMB_", s_sp, ".csv"), sep = ";", row.names = FALSE)
   
-  if (s_sp == species[1]) resultFreqVarcwm.S <- varcwm.S else resultFreqVarcwm.S <- rbind(resultFreqVarcwm.S,varcwm.S)
+  if (s_sp == species[1]) resultFreqvar.abond.S <- var.abond.S else resultFreqvar.abond.S <- rbind(resultFreqvar.abond.S,var.abond.S)
 
-  write.table(resultFreqVarcwm.S, "sterf/IV/sterf_resultFreqVarcwm_glmmTMB.csv", sep = ";", row.names = FALSE)
+  write.table(resultFreqvar.abond.S, "sterf/IV/sterf_resultFreqvarabond_glmmTMB.csv", sep = ";", row.names = FALSE)
 
-  rm(espece.S, YEAR2.S, mod.glmer.S,sum, ddglmer.S, obj.S, a.S, blower.S, bupper.S, varcwm.S)
+  rm(espece.S, YEAR2.S, mod.glmer.S,sum, ddglmer.S, obj.S, a.S, blower.S, bupper.S, var.abond.S)
 # }
 
 }
@@ -210,7 +210,7 @@ for (s_sp in species) {
 #   espece_e$MONTH_sc <- scale(espece_e$MONTH)
 #   
 #   mod.TMB.nb <- glmmTMB(FINAL_COUNT ~ YEAR_sc*MONTH_sc + LATITUDE_sc + LONGITUDE_sc + (1 | SITE_ID/TRANSECT_ID), weights=TOTAL_NM, data = espece_e, family="nbinom2")
-#   
+
 #   sTMBnb <- summary(mod.TMB.nb)
 #   ovd <- sTMBnb$AICtab[4] / sTMBnb$AICtab[5]
 #   overdisp_fun(mod.TMB.nb)[4]
@@ -261,7 +261,7 @@ for (s_sp in species) {
 #   write.table(ddTMBnb, paste0("sterf/CorresultatTMBnb_",s_sp,".csv"), row.names=FALSE, sep = ";")
 #   
 #   mod.TMB <- glmmTMB(FINAL_COUNT ~ YEAR_sc*MONTH_sc + LATITUDE_sc + LONGITUDE_sc + (1 | SITE_ID/TRANSECT_ID), weights=TOTAL_NM, data = espece_e, family="poisson")
-#   #mod.TMB <- glmmTMB(FINAL_COUNT ~ YEAR_sc*MONTH_sc + LATITUDE_sc+LONGITUDE_sc+LATITUDE_sc^2+LONGITUDE_sc^2+LATITUDE_sc:LONGITUDE_sc  + (1 | SITE_ID/TRANSECT_ID), data = espece_e, family="poisson")
+#   #mod.TMB <- glmmTMB(FINAL_COUNT ~ YEAR_sc*MONTH_sc + LATITUDE_sc+LONGITUDE_sc+LATITUDE_sc^2+LONGITUDE_sc^2+LATITUDE_sc:LONGITUDE_sc  + (1 | SITE_ID/TRANSECT_ID), weights=TOTAL_NM, data = espece_e, family="poisson")
 #   
 #   sTMB <- summary(mod.TMB)
 #   ovd <- sTMB$AICtab[4] / sTMB$AICtab[5] # rapport deviance / df.resid pour evaluer la surdispersion
@@ -269,10 +269,10 @@ for (s_sp in species) {
 #   a <- car::Anova(mod.TMB) # test="F" a utiliser dans l'Anova en cas de surdispersion pour les glm, mais pas applicable ici car glmer
 #   
 #   ovd.DHARMa <- testDispersion(simulateResiduals(mod.TMB), alternative = "two.sided", plot = F, type = c("DHARMa"))$statistic
-#   ovd.DHARMa.pv <- testDispersion(simulateResiduals(mod.TMB), alternative = "two.sided", plot = F, type = c("DHARMa"))$p.value # verifie s'il y a presence de sur ou sous dispersion
+#   ovd.DHARMa.pv <- testDispersion(simulateResiduals(mod.TMB), alternative = "two.sided", plot = F, type = c("DHARMa"))$p.value
 #   ks <- testUniformity(simulateResiduals(mod.TMB))$statistic
-#   ks.pv <- testUniformity(simulateResiduals(mod.TMB))$p.value # verifie si on s'eloigne de la distribution theorique
-#   outlier.pv <- testOutliers(simulateResiduals(mod.TMB), alternative = c("two.sided"))$p.value # verifie la presence d'exces de residus plus extremes que toutes les simulations
+#   ks.pv <- testUniformity(simulateResiduals(mod.TMB))$p.value
+#   outlier.pv <- testOutliers(simulateResiduals(mod.TMB), alternative = c("two.sided"))$p.value 
 #   zero_inflation <- testZeroInflation(simulateResiduals(mod.TMB))$statistic
 #   zero_inflation.pv <- testZeroInflation(simulateResiduals(mod.TMB))$p.value
 #   
@@ -321,7 +321,7 @@ for (s_sp in species) {
 
 
 #---------------------------------------------------------------------------------------------------
-# To count amount of data
+# To count amount of data (with and without imputation)
 
 for (s_sp in species) {
   
@@ -357,12 +357,12 @@ for (s_sp in species) {
   espece.S <- merge(espece.S, info_site, by="SITE_ID", all.x=TRUE, all.y=FALSE)
   espece.S[, c("SITE_ID", "TRANSECT_ID") := tstrsplit(SITE_ID, "_")]
   
-  # Avec imp
+  # With data imputation
   espece.S <- espece.S[complete.cases(espece.S$FINAL_COUNT)]
   total_avec_imp <- nrow(espece.S)
   obs_avec_imp <- nrow(espece.S[espece.S$FINAL_COUNT!=0,])
   
-  # Sans imp
+  # Without data imputation
   data_s <- subset(obs, obs$SPECIES==s_sp)
   total_sans_imp <- nrow(data_s)
   obs_sans_imp <- nrow(data_s[data_s$COUNT!=0,])
@@ -378,3 +378,4 @@ for (s_sp in species) {
 }
 
 write.table(Info, "data/Count_sterf.csv", sep=";", row.names=FALSE)
+
