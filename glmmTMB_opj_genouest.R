@@ -21,7 +21,7 @@ library("glmmTMB")
 # Importing the dataset
 op <- read.csv2("/1.Temporal_trends_and_interannual_variations/data/OP_abundance_data_may_august.csv", sep = ";")
 
-# Nord de la France
+# North of France
 opj <- opj[(opj$REGION=="Ile-de-France" | opj$REGION=="Hauts-de-France" | opj$REGION=="Normandie" | opj$REGION=="Bretagne" | opj$REGION=="Grand Est"),]
 opj <- opj[!is.na(opj$REGION),]
 opj[c("SITE_ID")] <- sapply(opj[c("SITE_ID")], as.character)
