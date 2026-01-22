@@ -1,6 +1,8 @@
 library("dplyr")
 
-#glmm.TMB <- read.csv2("data/STERF/TMB_TT/TMB/sterf_month.TMB.csv", sep=";")
+# We download model outputs
+
+# Poisson
 glmm.TMB <- read.csv2("1.Temporal_trends_and_interannual_variations/sterf_month.TMB_cor.csv", sep=";")
 glmm.TMB[c("Estimate_scaled","StdErr_scaled", "Estimate", "SdErrVariable", "Chisq", "Df", "pval", "Overdisp", "OverdispBolker","ovd.DHARMa", "OverdispDHARMa", "AIC","BIC", "zero_infl", "zero_infl.pv", "KS","KS.pv",  "Outlier.pv", "NbPresence", "Total")] <- sapply(glmm.TMB[c("Estimate_scaled","StdErr_scaled", "Estimate", "SdErrVariable", "Chisq", "Df", "pval", "Overdisp", "OverdispBolker","ovd.DHARMa", "OverdispDHARMa", "AIC","BIC", "zero_infl", "zero_infl.pv", "KS","KS.pv",  "Outlier.pv", "NbPresence", "Total")], as.numeric)
 glmm.TMB <- glmm.TMB %>% mutate_if(is.numeric,~round(.,3)) # Arrondir les valeurs des colonnes numeriques
@@ -9,7 +11,7 @@ names(glmm.TMB)[names(glmm.TMB)=="Esp"] <- "GROUP"
 glmm.TMB[is.na(glmm.TMB)] <- "NA"
 glmm.TMB$AIC <- as.numeric(as.character(glmm.TMB$AIC))
 
-#glmm.TMB.nb <- read.csv2("data/STERF/TMB_TT/TMB_nb/sterf_month.TMB.NB.csv", sep=";")
+# Negative binomiale
 glmm.TMB.nb <- read.csv2("1.Temporal_trends_and_interannual_variations/sterf_month.TMB.NB_cor.csv", sep=";")
 glmm.TMB.nb[c("Estimate_scaled","StdErr_scaled", "Estimate", "SdErrVariable", "Chisq", "Df", "pval", "Overdisp", "OverdispBolker","ovd.DHARMa", "OverdispDHARMa", "AIC","BIC", "zero_infl", "zero_infl.pv", "KS","KS.pv",  "Outlier.pv", "NbPresence", "Total")] <- sapply(glmm.TMB.nb[c("Estimate_scaled","StdErr_scaled", "Estimate", "SdErrVariable", "Chisq", "Df", "pval", "Overdisp", "OverdispBolker","ovd.DHARMa", "OverdispDHARMa", "AIC","BIC", "zero_infl", "zero_infl.pv", "KS","KS.pv",  "Outlier.pv", "NbPresence", "Total")], as.numeric)
 glmm.TMB.nb <- glmm.TMB.nb %>% mutate_if(is.numeric,~round(.,3)) # Arrondir les valeurs des colonnes numeriques
@@ -47,7 +49,7 @@ for (e in unique(glmm.TMB.nb$GROUP)){
                                                          pval=glmm.TMB.nb$pval[glmm.TMB.nb$GROUP==e],
                                                          # OverdispBolker.ratio=glmm.TMB.nb$OverdispBolker.ratio[glmm.TMB.nb$GROUP==e],
                                                          # OverdispBolker.pv=glmm.TMB.nb$OverdispBolker.pv[glmm.TMB.nb$GROUP==e],
-                                                         DeltaAIC=glmm.TMB$AIC[glmm.TMB$GROUP==e]-glmm.TMB.nb$AIC[glmm.TMB.nb$GROUP==e],
+                                                         DeltaAIC=glmm.TMB.nb$AIC[glmm.TMB$GROUP==e]-glmm.TMB.nb$AIC[glmm.TMB.nb$GROUP==e],
                                                          NbPresence=glmm.TMB.nb$NbPresence[glmm.TMB.nb$GROUP==e],
                                                          Total=glmm.TMB.nb$Total[glmm.TMB.nb$GROUP==e])
   )}
@@ -62,3 +64,4 @@ missing <- missing[,c("GROUP", "Modele", "Estimate_scaled", "StdErr_scaled", "Es
 Trend_sterf <- rbind(Selection_ukbms, missing)
 
 write.table(Trend_sterf, "data/STERF/TMB_TT/Trend_sterf_cor.csv", sep=";", row.names=FALSE)
+
