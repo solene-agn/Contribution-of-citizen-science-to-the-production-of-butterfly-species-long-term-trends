@@ -1,5 +1,5 @@
 ##############################################
-### CODE TO ESTIMATE OP TEMPORAL TRENDS ###
+### CODE TO ESTIMATE UKBMS TEMPORAL TRENDS ###
 ##############################################
 
 # This code was launched on a cluster.
@@ -209,4 +209,5 @@ write.table(varcwm, paste0("/home/genouest/mnhn_cesco/sagnoux/ukBMS/TMB_VI/resul
 write.table(resultFreqVarcwm, "/home/genouest/mnhn_cesco/sagnoux/ukBMS/TMB_VI/resultFreqVarcwm_TMB.csv", sep = ";", row.names = FALSE)
 
 #rm(YEAR2, mod.glmer,sum, ddglmer, obj, a, blower, bupper, varcwm)
+
 
