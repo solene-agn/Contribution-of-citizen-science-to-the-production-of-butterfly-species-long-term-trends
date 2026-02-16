@@ -45,7 +45,7 @@ obs$LONGITUDE <- as.numeric(as.character(obs$LONGITUDE))
 obs$LATITUDE <- as.numeric(as.character(obs$LATITUDE))
 obs$DAY <- lubridate::day(obs$DATE)
 
-obs <- subset(obs, obs$REGION_R %in% c("Normandie", "Île-de-France", "Hauts-de-France", "Bretagne", "Grand Est")) # data for north of France
+obs <- subset(obs, obs$REGION_R %in% c("Normandie", "Île-de-France", "Hauts-de-France", "Bretagne", "Grand Est")) # data for northerm France
 
 # Step 1 : 
 # We consider transects as sites to interpolate missing counts at the transect scale
@@ -378,4 +378,5 @@ for (s_sp in species) {
 }
 
 write.table(Info, "data/Count_sterf.csv", sep=";", row.names=FALSE)
+
 
